@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Client {
 
@@ -21,11 +22,13 @@ public class Client {
             out = new DataOutputStream(socket.getOutputStream());
 
             // Thread to read messages from the server
+            AtomicReference<String> userName = new AtomicReference<>();
             Thread readThread = new Thread(() -> {
                 try {
                     String serverMsg;
                     while ((serverMsg = inFromServer.readUTF()) != null) {
-                        System.out.println("Server: " + serverMsg);
+                        if (userName.get() == null) userName.set(serverMsg);
+                        System.out.println(serverMsg);
                     }
                 } catch (IOException e) {
                     System.out.println("Disconnected from server.");
@@ -38,6 +41,7 @@ public class Client {
             String line = "";
             while (!line.equals("End")) {
                 line = inFromUser.readLine();
+                System.out.println(userName.get() + " : " + line);
                 out.writeUTF(line);
                 out.flush();
             }
