@@ -1,39 +1,52 @@
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.Buffer;
 
 public class Client {
 
     private Socket socket;
-    private DataInputStream in;
+    private DataInputStream inFromServer;
+    private DataInputStream inFromUser;
     private DataOutputStream out;
+
     public Client(String address, int port){
         try {
             socket = new Socket(address, port);
             System.out.println("Connected to " + address + ":" + port);
-            in = new DataInputStream(System.in);
+
+            // Read from server
+            inFromServer = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+            // Read from keyboard (user input)
+            inFromUser = new DataInputStream(System.in);
+            // Write to server
             out = new DataOutputStream(socket.getOutputStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
-        String line = "";
-        while (!line.equals("End")){
-            try {
-                BufferedReader bufferedReader = new BufferedReader(
-                        new InputStreamReader(in));
-                line = bufferedReader.readLine();
+            // Thread to read messages from the server
+            Thread readThread = new Thread(() -> {
+                try {
+                    String serverMsg;
+                    while ((serverMsg = inFromServer.readUTF()) != null) {
+                        System.out.println("Server: " + serverMsg);
+                    }
+                } catch (IOException e) {
+                    System.out.println("Disconnected from server.");
+                }
+            });
+
+            readThread.start();
+
+            // Main thread handles sending messages to server
+            String line = "";
+            while (!line.equals("End")) {
+                line = inFromUser.readLine();
                 out.writeUTF(line);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                out.flush();
             }
-        }
 
-        try{
-            in.close();
-            out.close();
             socket.close();
+            inFromUser.close();
+            inFromServer.close();
+            out.close();
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
