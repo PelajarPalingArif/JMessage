@@ -27,7 +27,10 @@ public class Client {
                 try {
                     String serverMsg;
                     while ((serverMsg = inFromServer.readUTF()) != null) {
-                        if (userName.get() == null) userName.set(serverMsg);
+                        if (userName.get() == null) {
+                            userName.set(serverMsg);
+                            continue;
+                        }
                         System.out.println(serverMsg);
                     }
                 } catch (IOException e) {

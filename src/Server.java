@@ -65,11 +65,12 @@ public class Server {
                     throw new RuntimeException(e);
                 }
             });
-            outOne.writeUTF("C1");
-            outTwo.writeUTF("C2");
+
             st1.start();
             st2.start();
             countDown.await();
+            outOne.writeUTF("C1");
+            outTwo.writeUTF("C2");
             System.out.println("All party connection established");
 
 
